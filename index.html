@@ -31,7 +31,6 @@
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   .section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 18px 0 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; color: var(--accent); }
   
-  /* Grid updated to accommodate Correlation Cluster tag */
   .prop-row { 
     display: grid; 
     grid-template-columns: 1.6fr 1.3fr 0.7fr 0.7fr 0.7fr 1.2fr 68px 1.2fr 28px; 
@@ -467,8 +466,12 @@ Task:
 function copyPrompt() {
   const area = document.getElementById("outputPrompt");
   area.select();
-  navigator.clipboard.writeText(area.value);
-  alert("Formatted prompt copied! Paste directly into GridironQuant.");
+  navigator.clipboard.writeText(area.value).then(() => {
+    alert("Formatted prompt copied! Paste directly into GridironQuant.");
+  }).catch(() => {
+    document.execCommand("copy");
+    alert("Formatted prompt copied! Paste directly into GridironQuant.");
+  });
 }
 
 window.onload = () => {
