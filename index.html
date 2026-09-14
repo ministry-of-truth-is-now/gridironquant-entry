@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridironQuant Matchup Entry</title>
+<style>
+  :root {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --border-color: #334155;
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --cluster-a: #38bdf8;
+    --cluster-b: #a855f7;
+    --cluster-c: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: var(--bg-primary); color: var(--text-main); padding: 16px; font-size: 14px; }
+  .container { max-width: 980px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+  .btn-reset { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+  .btn-reset:hover { border-color: #ef4444; color: #ef4444; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
+  input, select, textarea { width: 100%; padding: 8px 10px; background: #0b1120; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.85rem; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 18px 0 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; color: var(--accent); }
+  
+  /* Grid updated to accommodate Correlation Cluster tag */
+  .prop-row { 
+    display: grid; 
+    grid-template-columns: 1.6fr 1.3fr 0.7fr 0.7fr 0.7fr 1.2fr 68px 1.2fr 28px; 
+    gap: 8px; 
+    align-items: center; 
+    margin-bottom: 8px; 
+    background: #131d31; 
+    padding: 8px; 
+    border-radius: 6px; 
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+
+  .prop-row.cluster-a { border-left-color: var(--cluster-a); }
+  .prop-row.cluster-b { border-left-color: var(--cluster-b); }
+  .prop-row.cluster-c { border-left-color: var(--cluster-c); }
+  
+  .vig-pill {
+    background: #0b1120;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 0.70rem;
+    font-family: monospace;
+    color: var(--accent);
+    text-align: center;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 35px;
+  }
+  .vig-pill .vig-sub {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .curve-box {
+    background: #0b1120;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .curve-box svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .select-cluster {
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .select-cluster.cluster-a { color: var(--cluster-a); border-color: var(--cluster-a); }
+  .select-cluster.cluster-b { color: var(--cluster-b); border-color: var(--cluster-b); }
+  .select-cluster.cluster-c { color: var(--cluster-c); border-color: var(--cluster-c); }
+
+  .btn-remove { background: #ef4444; border: none; color: #fff; border-radius: 4px; height: 32px; cursor: pointer; font-weight: bold; }
+  .btn-add { background: #3b82f6; border: none; color: #fff; padding: 6px 12px; border-radius: 4px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .btn-copy { background: var(--accent); border: none; color: #000; font-weight: 700; padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 14px; font-size: 0.95rem; }
+  .btn-copy:hover { background: var(--accent-hover); color: #fff; }
+  textarea { height: 160px; resize: vertical; margin-top: 12px; font-family: monospace; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-row">
+    <h2>GridironQuant Entry Form <span style="font-size: 0.8rem; color: var(--accent);">+EV Ingestion</span></h2>
+    <button type="button" class="btn-reset" onclick="resetDefaults()">Reset to Defaults</button>
+  </div>
+
+  <!-- Game Setup -->
+  <div class="grid-2">
+    <div>
+      <label>Away Team</label>
+      <select id="awayTeam"></select>
+    </div>
+    <div>
+      <label>Home Team</label>
+      <select id="homeTeam"></select>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div>
+      <label>Spread Line & Odds</label>
+      <input type="text" id="spread" value="KC -6.5 (-110)">
+    </div>
+    <div>
+      <label>Total Line & Odds</label>
+      <input type="text" id="total" value="46.5 (-110)">
+    </div>
+    <div>
+      <label>Primary Sportsbook</label>
+      <select id="sportsbook">
+        <option>DraftKings</option>
+        <option>FanDuel</option>
+        <option>BetMGM</option>
+        <option>Caesars</option>
+        <option>Pinnacle</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <label>Bankroll ($USD)</label>
+      <input type="number" id="bankroll" value="100">
+    </div>
+    <div>
+      <label>Min EV Edge Cutoff (%)</label>
+      <input type="number" id="minEv" value="2.5" step="0.5">
+    </div>
+  </div>
+
+  <div>
+    <label>Stadium & Weather Context</label>
+    <input type="text" id="weather" value="Arrowhead Stadium: Clear, 78F, 14 mph sustained wind">
+  </div>
+
+  <!-- Dynamic Props -->
+  <div class="section-title">Target Player Propositions & SGP Clusters</div>
+  <div id="propsContainer"></div>
+  <button type="button" class="btn-add" onclick="addPropRow()">+ Add Prop Line</button>
+
+  <!-- Output & Copy -->
+  <div class="section-title">Compiled Prompt Payload</div>
+  <textarea id="outputPrompt" readonly></textarea>
+  <button type="button" class="btn-copy" onclick="copyPrompt()">Copy Formatted Prompt to Clipboard</button>
+</div>
+
+<script>
+const STORAGE_KEY = "gridironquant_form_state";
+
+const DEFAULT_PROPS = [
+  { player: "Bo Nix", cat: "Pass Attempts", line: "32.5", over: "-110", under: "-118", cluster: "Cluster A" },
+  { player: "Kenneth Walker III", cat: "Receiving Yards", line: "16.5", over: "-115", under: "-115", cluster: "Cluster A" }
+];
+
+const TEAMS = [
+  "Arizona Cardinals","Atlanta Falcons","Baltimore Ravens","Buffalo Bills",
+  "Carolina Panthers","Chicago Bears","Cincinnati Bengals","Cleveland Browns",
+  "Dallas Cowboys","Denver Broncos","Detroit Lions","Green Bay Packers",
+  "Houston Texans","Indianapolis Colts","Jacksonville Jaguars","Kansas City Chiefs",
+  "Las Vegas Raiders","Los Angeles Chargers","Los Angeles Rams","Miami Dolphins",
+  "Minnesota Vikings","New England Patriots","New Orleans Saints","New York Giants",
+  "New York Jets","Philadelphia Eagles","Pittsburgh Steelers","San Francisco 49ers",
+  "Seattle Seahawks","Tampa Bay Buccaneers","Tennessee Titans","Washington Commanders"
+];
+
+let props = [];
+
+function initTeams() {
+  const away = document.getElementById("awayTeam");
+  const home = document.getElementById("homeTeam");
+  away.innerHTML = "";
+  home.innerHTML = "";
+  TEAMS.forEach(t => {
+    away.add(new Option(t, t, false, t === "Denver Broncos"));
+    home.add(new Option(t, t, false, t === "Kansas City Chiefs"));
+  });
+}
+
+function parseRawProb(oddsStr) {
+  if (!oddsStr) return null;
+  const clean = oddsStr.toString().replace(/[^0-9+-]/g, "").trim();
+  const val = parseInt(clean, 10);
+  if (isNaN(val) || val === 0) return null;
+  return val > 0 ? (100 / (val + 100)) : (Math.abs(val) / (Math.abs(val) + 100));
+}
+
+function calculateVigFree(overOddsStr, underOddsStr) {
+  const pOverRaw = parseRawProb(overOddsStr);
+  const pUnderRaw = parseRawProb(underOddsStr);
+  if (pOverRaw === null || pUnderRaw === null) return null;
+
+  const totalRaw = pOverRaw + pUnderRaw;
+  return {
+    overFair: ((pOverRaw / totalRaw) * 100).toFixed(1),
+    underFair: ((pUnderRaw / totalRaw) * 100).toFixed(1),
+    overround: ((totalRaw - 1.0) * 100).toFixed(1)
+  };
+}
+
+function generateCurveSvg(cat, lineVal) {
+  const line = parseFloat(lineVal);
+  if (isNaN(line) || line <= 0) {
+    return `<svg viewBox="0 0 68 35"><line x1="0" y1="30" x2="68" y2="30" stroke="#334155" stroke-width="1.5"/></svg>`;
+  }
+
+  const isCount = cat.includes("Attempts") || cat.includes("Receptions");
+  const w = 68;
+  const h = 35;
+  const points = [];
+  const steps = 20;
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = t * w;
+    let yNorm = 0;
+
+    if (isCount) {
+      const z = (t - 0.48) * 5.0;
+      yNorm = Math.exp(-0.5 * z * z);
+    } else {
+      const k = 2.5;
+      const xAdj = t * 6.5;
+      if (xAdj > 0) {
+        yNorm = Math.pow(xAdj, k - 1) * Math.exp(-xAdj) / 0.38;
+      }
+    }
+
+    const y = (h - 4) - Math.min(Math.max(yNorm, 0), 1) * (h - 8);
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+
+  const pathD = `M 0,${h - 3} L ${points.join(" L ")} L ${w},${h - 3} Z`;
+  const markerX = isCount ? 33 : 26;
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}">
+      <path d="${pathD}" fill="rgba(16, 185, 129, 0.22)" stroke="#10b981" stroke-width="1.2"/>
+      <line x1="${markerX}" y1="3" x2="${markerX}" y2="${h - 3}" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="2,2"/>
+      <line x1="0" y1="${h - 3}" x2="${w}" y2="${h - 3}" stroke="#334155" stroke-width="1"/>
+    </svg>
+  `;
+}
+
+function saveState() {
+  const state = {
+    awayTeam: document.getElementById("awayTeam").value,
+    homeTeam: document.getElementById("homeTeam").value,
+    spread: document.getElementById("spread").value,
+    total: document.getElementById("total").value,
+    sportsbook: document.getElementById("sportsbook").value,
+    bankroll: document.getElementById("bankroll").value,
+    minEv: document.getElementById("minEv").value,
+    weather: document.getElementById("weather").value,
+    props: props
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) {
+    props = JSON.parse(JSON.stringify(DEFAULT_PROPS));
+    return;
+  }
+  try {
+    const state = JSON.parse(saved);
+    if (state.awayTeam) document.getElementById("awayTeam").value = state.awayTeam;
+    if (state.homeTeam) document.getElementById("homeTeam").value = state.homeTeam;
+    if (state.spread) document.getElementById("spread").value = state.spread;
+    if (state.total) document.getElementById("total").value = state.total;
+    if (state.sportsbook) document.getElementById("sportsbook").value = state.sportsbook;
+    if (state.bankroll) document.getElementById("bankroll").value = state.bankroll;
+    if (state.minEv) document.getElementById("minEv").value = state.minEv;
+    if (state.weather) document.getElementById("weather").value = state.weather;
+    props = Array.isArray(state.props) ? state.props : JSON.parse(JSON.stringify(DEFAULT_PROPS));
+  } catch (err) {
+    console.error("Failed to parse stored form state:", err);
+    props = JSON.parse(JSON.stringify(DEFAULT_PROPS));
+  }
+}
+
+function resetDefaults() {
+  if (confirm("Reset all form values and player props back to default?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    initTeams();
+    document.getElementById("spread").value = "KC -6.5 (-110)";
+    document.getElementById("total").value = "46.5 (-110)";
+    document.getElementById("sportsbook").value = "DraftKings";
+    document.getElementById("bankroll").value = "100";
+    document.getElementById("minEv").value = "2.5";
+    document.getElementById("weather").value = "Arrowhead Stadium: Clear, 78F, 14 mph sustained wind";
+    props = JSON.parse(JSON.stringify(DEFAULT_PROPS));
+    renderProps();
+    saveState();
+  }
+}
+
+function getClusterClass(clusterVal) {
+  if (clusterVal === "Cluster A") return "cluster-a";
+  if (clusterVal === "Cluster B") return "cluster-b";
+  if (clusterVal === "Cluster C") return "cluster-c";
+  return "";
+}
+
+function updateRowVisuals(idx) {
+  const p = props[idx];
+  const vig = calculateVigFree(p.over, p.under);
+  const pillEl = document.getElementById(`vig-pill-${idx}`);
+  const curveEl = document.getElementById(`curve-box-${idx}`);
+  const rowEl = document.getElementById(`prop-row-${idx}`);
+  const selectEl = document.getElementById(`cluster-select-${idx}`);
+
+  if (rowEl) {
+    rowEl.className = `prop-row ${getClusterClass(p.cluster)}`;
+  }
+  if (selectEl) {
+    selectEl.className = `select-cluster ${getClusterClass(p.cluster)}`;
+  }
+  if (pillEl) {
+    if (vig) {
+      pillEl.innerHTML = `<span>O: ${vig.overFair}% | U: ${vig.underFair}%</span><span class="vig-sub">Vig: ${vig.overround}%</span>`;
+    } else {
+      pillEl.innerHTML = `<span style="color: var(--text-muted); font-size: 0.65rem;">Enter odds</span>`;
+    }
+  }
+  if (curveEl) {
+    curveEl.innerHTML = generateCurveSvg(p.cat, p.line);
+  }
+}
+
+function renderProps() {
+  const container = document.getElementById("propsContainer");
+  container.innerHTML = "";
+  props.forEach((p, idx) => {
+    if (!p.cluster) p.cluster = "Standalone";
+    const row = document.createElement("div");
+    row.className = `prop-row ${getClusterClass(p.cluster)}`;
+    row.id = `prop-row-${idx}`;
+    row.innerHTML = `
+      <input type="text" placeholder="Player" value="${p.player}" oninput="props[${idx}].player=this.value; onDataChange(${idx});">
+      <select onchange="props[${idx}].cat=this.value; onDataChange(${idx});">
+        <option ${p.cat==='Pass Attempts'?'selected':''}>Pass Attempts</option>
+        <option ${p.cat==='Passing Yards'?'selected':''}>Passing Yards</option>
+        <option ${p.cat==='Receptions'?'selected':''}>Receptions</option>
+        <option ${p.cat==='Receiving Yards'?'selected':''}>Receiving Yards</option>
+        <option ${p.cat==='Rush Attempts'?'selected':''}>Rush Attempts</option>
+        <option ${p.cat==='Rush Yards'?'selected':''}>Rush Yards</option>
+      </select>
+      <input type="text" placeholder="Line" value="${p.line}" oninput="props[${idx}].line=this.value; onDataChange(${idx});">
+      <input type="text" placeholder="Over" value="${p.over}" oninput="props[${idx}].over=this.value; onDataChange(${idx});">
+      <input type="text" placeholder="Under" value="${p.under}" oninput="props[${idx}].under=this.value; onDataChange(${idx});">
+      <div class="vig-pill" id="vig-pill-${idx}"></div>
+      <div class="curve-box" id="curve-box-${idx}" title="Distribution preview with market line cutoff"></div>
+      <select id="cluster-select-${idx}" class="select-cluster ${getClusterClass(p.cluster)}" onchange="props[${idx}].cluster=this.value; onDataChange(${idx});">
+        <option value="Standalone" ${p.cluster==='Standalone'?'selected':''}>Standalone</option>
+        <option value="Cluster A" ${p.cluster==='Cluster A'?'selected':''}>SGP Cluster A</option>
+        <option value="Cluster B" ${p.cluster==='Cluster B'?'selected':''}>SGP Cluster B</option>
+        <option value="Cluster C" ${p.cluster==='Cluster C'?'selected':''}>SGP Cluster C</option>
+      </select>
+      <button class="btn-remove" onclick="removePropRow(${idx})">&times;</button>
+    `;
+    container.appendChild(row);
+    updateRowVisuals(idx);
+  });
+  buildPrompt();
+}
+
+function addPropRow() {
+  props.push({ player: "", cat: "Pass Attempts", line: "", over: "-110", under: "-110", cluster: "Standalone" });
+  renderProps();
+  saveState();
+}
+
+function removePropRow(idx) {
+  props.splice(idx, 1);
+  renderProps();
+  saveState();
+}
+
+function onDataChange(changedIdx) {
+  if (typeof changedIdx === "number") {
+    updateRowVisuals(changedIdx);
+  }
+  buildPrompt();
+  saveState();
+}
+
+function buildPrompt() {
+  const away = document.getElementById("awayTeam").value;
+  const home = document.getElementById("homeTeam").value;
+  const spread = document.getElementById("spread").value;
+  const total = document.getElementById("total").value;
+  const book = document.getElementById("sportsbook").value;
+  const bankroll = document.getElementById("bankroll").value;
+  const minEv = document.getElementById("minEv").value;
+  const weather = document.getElementById("weather").value;
+
+  let standaloneText = "";
+  const clusters = {};
+
+  props.forEach(p => {
+    if (p.player && p.line) {
+      const family = (p.cat.includes("Attempts") || p.cat.includes("Receptions")) ? "Negative Binomial" : "Gamma / Log-Normal";
+      const vig = calculateVigFree(p.over, p.under);
+      const fairMeta = vig ? ` [Vig-Free Break-Even: Over ${vig.overFair}% / Under ${vig.underFair}%]` : "";
+      const lineStr = `${p.player} (${p.cat}): ${p.line} (Over ${p.over} / Under ${p.under})${fairMeta} [Family: ${family}]`;
+
+      if (!p.cluster || p.cluster === "Standalone") {
+        standaloneText += `- ${lineStr}\n`;
+      } else {
+        if (!clusters[p.cluster]) clusters[p.cluster] = [];
+        clusters[p.cluster].push(lineStr);
+      }
+    }
+  });
+
+  let clustersText = "";
+  Object.keys(clusters).forEach(cName => {
+    clustersText += `\n[${cName} - Correlated Same-Game Parlay (SGP) Group]:\n`;
+    clusters[cName].forEach(leg => {
+      clustersText += `  * Leg: ${leg}\n`;
+    });
+    clustersText += `  * Task: Evaluate tail dependence via D-Vine copula vs. naive independent pricing.\n`;
+  });
+
+  const prompt = `Matchup: ${away} @ ${home}
+Consensus Lines: Spread ${spread}, Total ${total} @ ${book}
+Context: ${weather}
+Bankroll: $${bankroll} (Quarter-Kelly Sizing)
+EV Threshold: Minimum +${minEv}%
+
+Standalone Propositions:
+${standaloneText || "- None (focus on full board or SGP clusters)"}
+${clustersText}
+Task:
+1. Decompose game-script pace and score urgency.
+2. For standalone props, compute marginal probabilities, EV, and Quarter-Kelly stakes.
+3. For any tagged SGP clusters, calculate the model joint copula probability, compare to the sportsbook's implied parlay odds, and verify whether the joint payout beats fair price.
+4. If no wager exceeds the +${minEv}% threshold, output 'NO ACTIONABLE EDGE'.`;
+
+  document.getElementById("outputPrompt").value = prompt;
+}
+
+function copyPrompt() {
+  const area = document.getElementById("outputPrompt");
+  area.select();
+  navigator.clipboard.writeText(area.value);
+  alert("Formatted prompt copied! Paste directly into GridironQuant.");
+}
+
+window.onload = () => {
+  initTeams();
+  loadState();
+  renderProps();
+  ["awayTeam","homeTeam","spread","total","sportsbook","bankroll","minEv","weather"].forEach(id => {
+    document.getElementById(id).addEventListener("input", () => onDataChange());
+  });
+};
+</script>
+</body>
+</html>
